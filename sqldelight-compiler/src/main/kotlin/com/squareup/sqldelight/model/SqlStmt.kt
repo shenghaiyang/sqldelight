@@ -128,10 +128,10 @@ class SqlStmt private constructor(
     val type = TypeSpec.classBuilder(programName)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
         .superclass(when (statement) {
-          is SqliteParser.Insert_stmtContext -> SQLDELIGHT_INSERT_STATEMENT
-          is SqliteParser.Update_stmtContext -> SQLDELIGHT_UPDATE_STATEMENT
-          is SqliteParser.Delete_stmtContext -> SQLDELIGHT_DELETE_STATEMENT
-          else -> SQLDELIGHT_COMPILED_STATEMENT
+          is SqliteParser.Insert_stmtContext -> SQLDELIGHT_MUTATION
+          is SqliteParser.Update_stmtContext -> SQLDELIGHT_MUTATION
+          is SqliteParser.Delete_stmtContext -> SQLDELIGHT_MUTATION
+          else -> SQLDELIGHT_QUERY
         })
 
     if (javadoc != null) {
@@ -140,9 +140,7 @@ class SqlStmt private constructor(
 
     val constructor = MethodSpec.constructorBuilder()
         .addModifiers(Modifier.PUBLIC)
-        .addParameter(SQLITEDATABASE_TYPE, "database")
-        .addStatement("super(\$S, database.compileStatement(\"\"\n    + \$S))",
-            tablesUsed.first(), sqliteText)
+        .addStatement("super(\$S, \$S)", tablesUsed.first(), sqliteText)
 
     arguments.mapNotNull { it.argumentType.comparable }
         .filter { !it.isHandledType && it.tableInterface != null }
@@ -163,17 +161,12 @@ class SqlStmt private constructor(
   }
 
   internal fun programMethod(): MethodSpec {
-    val method = MethodSpec.methodBuilder("bind")
+    val method = MethodSpec.methodBuilder("bindTo")
+        .addAnnotation(Override::class.java)
         .addModifiers(Modifier.PUBLIC)
+        .addParameter(SQLITE_PROGRAM, "program")
 
     arguments.sortedBy { it.index }.forEach { argument ->
-      val parameter = ParameterSpec.builder(
-          argument.argumentType.comparable?.javaType ?: TypeName.OBJECT, argument.name)
-      if (argument.argumentType.comparable != null) {
-        parameter.addAnnotations(argument.argumentType.comparable.annotations())
-      }
-      method.addParameter(parameter.build())
-
       var startedControlFlow = false
       if (argument.argumentType.comparable == null || argument.argumentType.comparable.nullable) {
         method.beginControlFlow("if (${argument.name} == null)")
@@ -418,13 +411,10 @@ class SqlStmt private constructor(
   }
 
   companion object {
-    val SQLDELIGHT_COMPILED_STATEMENT = ClassName.get("com.squareup.sqldelight", "SqlDelightCompiledStatement")
-    val SQLDELIGHT_INSERT_STATEMENT = SQLDELIGHT_COMPILED_STATEMENT.nestedClass("Insert")
-    val SQLDELIGHT_UPDATE_STATEMENT = SQLDELIGHT_COMPILED_STATEMENT.nestedClass("Update")
-    val SQLDELIGHT_DELETE_STATEMENT = SQLDELIGHT_COMPILED_STATEMENT.nestedClass("Delete")
-    val SQLDELIGHT_STATEMENT = ClassName.get("com.squareup.sqldelight", "SqlDelightStatement")
+    val SQLDELIGHT_MUTATION = ClassName.get("com.squareup.sqldelight", "SqlDelightMutation")
+    val SQLDELIGHT_QUERY = ClassName.get("com.squareup.sqldelight", "SqlDelightQuery")
     val SQLDELIGHT_LITERALS = ClassName.get("com.squareup.sqldelight.internal", "SqliteLiterals")
-    val SQLITEDATABASE_TYPE = ClassName.get("android.database.sqlite", "SQLiteDatabase")
+    val SQLITE_PROGRAM = ClassName.get("android.arch.persistence.db", "SupportSQLiteProgram")
     val LIST_TYPE = ClassName.get(List::class.java)
     val ARRAYLIST_TYPE = ClassName.get(ArrayList::class.java)
     val STRINGBUILDER_TYPE = ClassName.get(StringBuilder::class.java)

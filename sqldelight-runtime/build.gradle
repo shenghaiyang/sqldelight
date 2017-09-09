@@ -24,12 +24,13 @@ android {
   }
 
   defaultConfig {
-    minSdkVersion 4
+    minSdkVersion 14
   }
 }
 
 dependencies {
   compile dep.supportAnnotations
+  compile dep.supportSqlite
 
   testCompile dep.junit
   testCompile dep.okio

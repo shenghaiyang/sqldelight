@@ -13,6 +13,10 @@ android {
   compileSdkVersion 26
   buildToolsVersion '26.0.1'
 
+  defaultConfig {
+    minSdkVersion 14
+  }
+
   sourceSets {
     main.java.srcDirs += '../../../../../sqldelight-runtime/src/main/java'
   }
@@ -25,4 +29,5 @@ android {
 dependencies {
   // TODO inject this value so we ensure it's using the enclosing project's version.
   compile 'org.jetbrains.kotlin:kotlin-stdlib:1.0.6'
+  compile 'android.arch.persistence.room:support-db:1.0.0-alpha9'
 }

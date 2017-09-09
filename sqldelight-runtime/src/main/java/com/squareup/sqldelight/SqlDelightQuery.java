@@ -15,17 +15,20 @@
  */
 package com.squareup.sqldelight;
 
+import android.arch.persistence.db.SupportSQLiteQuery;
 import java.util.Set;
 
-public class SqlDelightStatement {
-  public final String statement;
-  public final String[] args;
+public abstract class SqlDelightQuery implements SupportSQLiteQuery {
   /** A set of the tables this statement observes. */
   public final Set<String> tables;
+  private final String sql;
 
-  public SqlDelightStatement(String statement, String[] args, Set<String> tables) {
-    this.statement = statement;
-    this.args = args;
+  public SqlDelightQuery(Set<String> tables, String sql) {
     this.tables = tables;
+    this.sql = sql;
+  }
+
+  @Override public final String getSql() {
+    return sql;
   }
 }

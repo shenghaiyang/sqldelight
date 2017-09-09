@@ -1,8 +1,10 @@
 package com.squareup.sqldelight.integration;
 
+import android.arch.persistence.db.SupportSQLiteDatabase;
+import android.arch.persistence.db.SupportSQLiteOpenHelper;
+import android.arch.persistence.db.SupportSQLiteStatement;
+import android.arch.persistence.db.framework.FrameworkSQLiteOpenHelperFactory;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteStatement;
 import android.support.test.InstrumentationRegistry;
 import org.junit.After;
 import org.junit.Before;
@@ -17,8 +19,14 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertTrue;
 
 public class IntegrationTests {
-  private final DatabaseHelper helper = new DatabaseHelper(InstrumentationRegistry.getContext());
-  private final SQLiteDatabase database = helper.getWritableDatabase();
+  private final SupportSQLiteOpenHelper.Configuration configuration =
+      SupportSQLiteOpenHelper.Configuration.builder(InstrumentationRegistry.getContext())
+          .callback(new DatabaseCallback())
+          .version(DatabaseCallback.VERSION)
+          .build();
+  private final SupportSQLiteOpenHelper helper =
+      new FrameworkSQLiteOpenHelperFactory().create(configuration);
+  private final SupportSQLiteDatabase database = helper.getWritableDatabase();
 
   @Before public void before() {
     database.execSQL(Person.SEED_PEOPLE);
