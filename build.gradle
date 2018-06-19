@@ -40,6 +40,9 @@ subprojects {
     mavenCentral()
     google()
     jcenter()
+    maven {
+      url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
   }
 
   group = GROUP
