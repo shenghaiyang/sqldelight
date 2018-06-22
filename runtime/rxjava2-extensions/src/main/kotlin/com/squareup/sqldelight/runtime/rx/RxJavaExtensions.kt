@@ -31,17 +31,17 @@ private class QueryOnSubscribe<T : Any>(
   private val query: Query<T>
 ) : AtomicBoolean(), ObservableOnSubscribe<Query<T>>, Query.Listener, Disposable {
 
-  private lateinit var emitter: ObservableEmitter<Query<T>>
+  private val emitters = mutableListOf<ObservableEmitter<Query<T>>>()
 
   override fun subscribe(emitter: ObservableEmitter<Query<T>>) {
-    this.emitter = emitter
+    emitters.add(emitter)
     emitter.setDisposable(this)
     query.addListener(this)
     emitter.onNext(query)
   }
 
   override fun queryResultsChanged() {
-    emitter.onNext(query)
+    emitters.forEach { it.onNext(query) }
   }
 
   override fun isDisposed() = get()
